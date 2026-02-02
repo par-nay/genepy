@@ -145,7 +145,7 @@ def pop_dec2bin(pop_dec, N_bits_chromosome, decimal_acc, offset = 0):
             decimal_acc = decimal_acc,
             offset = offset,
         )
-        pop_bin.append(indiv_bin)
+        pop_bin.append(bin_str2arr(indiv_bin))
     return np.array(pop_bin)
 
 
