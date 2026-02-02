@@ -104,7 +104,7 @@ def bin2dec(bin_arr, N_bits_segment, decimal_acc, offset = 0):
     N_var 	= N // N_bits_segment
     dec_arr = []
     for i in range(N_var):
-        var = bin_arr2str(bin_arr[i*N_var : (i+1)*N_var])
+        var = bin_arr2str(bin_arr[i*N_bits_segment : (i+1)*N_bits_segment])
         var = int(var, 2)
         var = var / 10**(decimal_acc)
         dec_arr.append(var)
