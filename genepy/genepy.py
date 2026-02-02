@@ -114,9 +114,9 @@ def bin2dec(bin_arr, N_bits_segment, decimal_acc, offset = 0):
     return dec_arr
 
 
-def pop_dec2bin(pop_dec, N_bits_chromosome, decimal_acc):
+def pop_dec2bin(pop_dec, N_bits_chromosome, decimal_acc, offset = 0):
     """
-    Convert a vector of decimal numbers to a concatenated binary string (chromosome representation).
+    Convert a population of decimal vectors to their genotype representation (binary vectors).
 
     Parameters:
     -----------
@@ -130,7 +130,7 @@ def pop_dec2bin(pop_dec, N_bits_chromosome, decimal_acc):
     Desired decimal accuracy (number of decimal places)
 
     offset : float [np.ndarray], optional
-    Any offset (vector) to be added to the input decimal array before conversion. Defaults to 0.
+    Any offset (vector) to be added to the input decimal arrays before conversion. Defaults to 0.
 
     Returns:
     --------
@@ -143,14 +143,15 @@ def pop_dec2bin(pop_dec, N_bits_chromosome, decimal_acc):
             dec_arr = indiv,
             N_bits_chromosome = N_bits_chromosome,
             decimal_acc = decimal_acc,
+            offset = offset,
         )
         pop_bin.append(indiv_bin)
     return np.array(pop_bin)
 
 
-def pop_bin2dec(pop_bin, N_bits_segment, decimal_acc):
+def pop_bin2dec(pop_bin, N_bits_segment, decimal_acc, offset = 0):
     """
-    Convert a chromosome vector of bits (0s and 1s) to a decimal vector (phenotype representation).
+    Convert a population of binary vectors to their phenotype representation (decimal vectors).
 
     Parameters:
     -----------
@@ -164,7 +165,7 @@ def pop_bin2dec(pop_bin, N_bits_segment, decimal_acc):
     Desired decimal accuracy (number of decimal places)
 
     offset : float [np.ndarray], optional
-    Any offset (vector) to be subtracted from the decimal array after conversion. Defaults to 0.
+    Any offset (vector) to be subtracted from the decimal arrays after conversion. Defaults to 0.
 
     Returns:
     --------
@@ -177,6 +178,7 @@ def pop_bin2dec(pop_bin, N_bits_segment, decimal_acc):
             bin_arr = indiv,
             N_bits_segment = N_bits_segment,
             decimal_acc = decimal_acc,
+            offset = offset,
         )
         pop_dec.append(indiv_dec)
         return np.array(pop_dec)
@@ -314,6 +316,7 @@ class PopGenetics:
         var_ranges,
         dist = 'uniform', 
         return_genotype = False,
+        offset = 0
     ):
         """ 
         Initialize a population by stochastically sampling individuals in the required variable ranges
@@ -331,6 +334,9 @@ class PopGenetics:
 
         return_genotype : bool, optional
         Whether to return the initial population in the genotype representation (binary vectors). Defaults to False.
+
+        offset : float [np.ndarray], optional
+        Any offset (vector) to be added to the decimal arrays before conversion to the binary genotype. Defaults to 0.
 
         Returns:
         -----------
@@ -353,6 +359,7 @@ class PopGenetics:
                     dec_arr = indiv,
                     N_bits_chromosome = self.N_bits_chromosome,
                     decimal_acc = self.decimal_acc,
+                    offset = offset,
                 )
                 pop_bin.append(
                     bin_str2arr(indiv_bin)
