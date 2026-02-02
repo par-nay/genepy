@@ -653,7 +653,6 @@ class PopGenetics:
                 N_pairs = N_pairs,
                 selection_type = selection_type,
                 rank_selection = rank_selection,
-                random_rng = self.rng_selection,
             )
             offspring, fitness_arr = self.breed(
                 mating_pool = mating_pool,
