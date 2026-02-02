@@ -671,7 +671,7 @@ class PopGenetics:
 
         indsort = np.argsort(fitness_arr)
         fittest_indiv = offspring[indsort][-1]
-        fittest_indiv_dec = bin2dec(fittest_indiv, self.N_bits_segment, self.decimal_acc)
+        fittest_indiv_dec = bin2dec(fittest_indiv, self.N_bits_segment, self.decimal_acc, offset = self.offset)
         return {
             'fittest_individual': fittest_indiv_dec,
             'best_overall_fitness': fitness_arr[indsort][-1],
