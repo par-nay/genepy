@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "genepy"
+version = "0.1.0"
+description = "GenePy - Genetic Algorithms with Python"
+authors = [
+  { name = "Parth Nayak", email = "parth3e8@gmail.com" }
+]
+dependencies = [
+  # List any runtime dependencies here
+  "numpy",
+  "pyyaml",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "black",
+]
+
+[tool.setuptools]
+packages = ["genepy"]
+
+[tool.setuptools.package-dir]
+"" = "."
