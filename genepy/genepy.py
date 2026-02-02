@@ -17,7 +17,7 @@ def bin_str2arr(bin_str):
     A numpy array of 0s and 1s corresponding to the input binary string.
     """
     l	= list(bin_str)
-    return np.array(l, dtype = 'float')
+    return np.array(l, dtype = 'int')
 
 
 def bin_arr2str(bin_arr):
@@ -34,7 +34,7 @@ def bin_arr2str(bin_arr):
     bin_s : str
     The string representing the input binary vector, e.g., '101011'.
     """
-    bin_str = ''.join(list(bin_arr.astype(str)))
+    bin_str = ''.join(list(bin_arr.astype(int).astype(str)))
     return bin_str
 
 
