@@ -314,7 +314,7 @@ class PopGenetics:
         var_ranges,
         dist = 'uniform', 
         return_genotype = False,
-        offset = 0
+        offset = 0,
     ):
         """ 
         Initialize a population by stochastically sampling individuals in the required variable ranges
@@ -341,6 +341,7 @@ class PopGenetics:
         np.ndarray
         Initial population of shape `(popsize, N_var)` or `(popsize, N_bits_chromosome)` (if `return_genotype` is `True`)
         """
+        self.offset = offset
         pop = []
         if dist == 'uniform':
             pop = self.rng_popinit.uniform(
@@ -411,6 +412,7 @@ class PopGenetics:
                 pop_bin = pop,
                 N_bits_segment = self.N_bits_segment,
                 decimal_acc = self.decimal_acc,
+                offset = self.offset
             )
             fitness_arr = self.fitness_func(pop_dec)
 
@@ -531,6 +533,7 @@ class PopGenetics:
                 pop_bin = offspring,
                 N_bits_segment = self.N_bits_segment,
                 decimal_acc = self.decimal_acc,
+                offset = self.offset,
             )
             fitness_offspring = self.fitness_func(offspring_dec)
         if prune:
@@ -541,6 +544,7 @@ class PopGenetics:
                     pop_bin = offspring,
                     N_bits_segment = self.N_bits_segment,
                     decimal_acc = self.decimal_acc,
+                    offset = self.offset,
                 )
                 fitness_offspring = self.fitness_func(offspring_dec)
             indsort   = np.argsort(fitness_offspring)
@@ -626,6 +630,7 @@ class PopGenetics:
             pop_bin = pop,
             N_bits_segment = self.N_bits_segment,
             decimal_acc = self.decimal_acc,
+            offset = self.offset,
         )
         fitness_arr = self.fitness_func(pop_dec)
         best_fitness_per_gen   = [np.max(fitness_arr)]
@@ -639,6 +644,8 @@ class PopGenetics:
             if switch is not None and gen >= switch:
                 rank_selection = True
             elif switch is not None and gen < switch:
+                rank_selection = False
+            elif switch is None:
                 rank_selection = False
             mating_pool = self.create_mating_pool(
                 pop = pop,
