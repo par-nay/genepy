@@ -181,7 +181,7 @@ def pop_bin2dec(pop_bin, N_bits_segment, decimal_acc, offset = 0):
             offset = offset,
         )
         pop_dec.append(indiv_dec)
-        return np.array(pop_dec)
+    return np.array(pop_dec)
 
 
 def crossover(
