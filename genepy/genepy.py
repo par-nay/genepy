@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
+import sys
 import numpy as np
+from tqdm import tqdm
 
 def bin_str2arr(bin_str):
     """
@@ -561,6 +563,7 @@ class PopGenetics:
         prob_mut = 0.0,
         prune = False,
         pruning_cutoff = None,
+        verbose = True,
     ):
         """
         Evolve a population of individuals by natural selection for a fixed number of generations.
@@ -594,6 +597,9 @@ class PopGenetics:
         pruning_cutoff : int, optional
         If pruning, the number of fittest offspring to keep. Must be supplied if `prune` is `True`. Defaults to `None`. 
 
+        verbose : bool, optional
+        Whether to show progress of the evolution as a progress bar. Defaults to True.
+
         Returns:
         -----------
         dict 
@@ -625,6 +631,10 @@ class PopGenetics:
         best_fitness_per_gen   = [np.max(fitness_arr)]
         mean_fitness_per_gen   = [np.mean(fitness_arr)]
         median_fitness_per_gen = [np.median(fitness_arr)]
+
+        if verbose:
+            progress_bar = tqdm(total = N_gen, desc=f"[genepy] Evolution in progress", unit = "generations", file=sys.stdout,)
+
         for gen in range(N_gen):
             if switch is not None and gen >= switch:
                 rank_selection = True
@@ -650,6 +660,8 @@ class PopGenetics:
             mean_fitness_per_gen.append(np.mean(fitness_arr))
             median_fitness_per_gen.append(np.median(fitness_arr))
             pop = offspring
+            if verbose:
+                progress_bar.update(1)
 
         indsort = np.argsort(fitness_arr)
         fittest_indiv = fitness_arr[indsort][-1]
