@@ -563,6 +563,7 @@ class PopGenetics:
         N_pairs,
         selection_type = 'SUS',
         elitist = True,
+        n_elites = 1,
         liberal = False,
         switch = None,
         crossover_type = 'uniform',
@@ -589,7 +590,10 @@ class PopGenetics:
         Type of parent selection method to use. Options are: 'RW' for Roulette Wheel selection and 'SUS' for Stochastic Universal Sampling. The latter is a variation of the former with N_dim (angularly) equidistant pointers on the roulette wheel, where N_dim is the dimensionality of a seletion (e.g., for a "pair", N_dim = 2). Defaults to 'SUS'. 
 
         elitist : bool, optional
-        If True, the fittest individual at each generation is carried over directly to the next. Defaults to True.
+        If True, the fittest individual(s) at each generation is (are) carried over directly to the next (see `n_elites`). Defaults to True.
+
+        n_elites : int, optional 
+        If an elitist strategy is adopted, the number of fittest individuals to carry over to the next. Defaults to 1.
 
         liberal : bool, optional
         If True, the least fit individual at each generation is carried over to the next (as an attempt to preserve genetic diversity). Recommended to always use in combination with `elitist`. Defaults to False.
@@ -652,8 +656,8 @@ class PopGenetics:
 
         indsort = np.argsort(fitness_arr)
         if elitist:
-            elite = pop[indsort][-1]
-            fitness_elite = fitness_arr[indsort][-1]
+            elites = pop[indsort][-n_elites:]
+            fitness_elites = fitness_arr[indsort][-n_elites]
 
         if liberal:
             runt = pop[indsort][0]
@@ -685,8 +689,8 @@ class PopGenetics:
                 return_fitness = True,
             )
             if elitist: 
-                offspring   = np.concatenate([offspring,[elite]])
-                fitness_arr = np.concatenate([fitness_arr, [fitness_elite]])
+                offspring   = np.concatenate([offspring, elites])
+                fitness_arr = np.concatenate([fitness_arr, fitness_elites])
             if liberal: 
                 offspring   = np.concatenate([offspring,[runt]])
                 fitness_arr = np.concatenate([fitness_arr, [fitness_runt]])
@@ -696,11 +700,10 @@ class PopGenetics:
             median_fitness_per_gen.append(np.median(fitness_arr))
             stdev_fitness_per_gen.append(np.std(fitness_arr))
             
-            # Update elite to be the best individual found so far
             indsort = np.argsort(fitness_arr)
             if elitist:
-                elite = offspring[indsort][-1]
-                fitness_elite = fitness_arr[indsort][-1]
+                elites = offspring[indsort][-n_elites:]
+                fitness_elites = fitness_arr[indsort][-n_elites:]
 
             if liberal:
                 runt = offspring[indsort][0]
