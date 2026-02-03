@@ -376,6 +376,7 @@ class PopGenetics:
         N_pairs,
         selection_type = 'SUS', 
         rank_selection = False,
+        sp_rank = 2.0,
     ):
         """
         Create a mating pool by selecting pairs of individuals from the given population based on their fitness (selection pressure).
@@ -396,6 +397,9 @@ class PopGenetics:
 
         rank_selection : bool, optional
         If `True`, applies a rank-based selection pressure instead of a fitness-proportionate one. Defaults to `False`.
+
+        sp_rank : float, optional
+        If rank selection is applied, the selection pressure parameter of [...], 1 <= sp_rank <= 2, where 1 is no selection pressure (flat PDF) and 2 is the steepest linear selection pressure. Defaults to 2.
 
         Returns:
         --------
@@ -422,7 +426,8 @@ class PopGenetics:
         fitness_arr  = fitness_arr[indsort]
         if rank_selection:
             ranks      = np.arange(len(pop), 0, -1)
-            probs      = 1./ ranks
+            # probs      = 1./ ranks
+            probs      = sp_rank - 2*(sp_rank - 1)*(ranks - 1)/(len(ranks)-1)
             probs      = probs / np.sum(probs) # normalization
             cuml_probs = np.array([sum(probs[0:k+1]) for k in range(0, len(pop))])
         else:
@@ -566,7 +571,8 @@ class PopGenetics:
         n_elites = 1,
         liberal = False,
         n_runts = 1,
-        switch = None,
+        switch_selection  = None,
+        sp_rank_selection = 2.0,
         crossover_type = 'uniform',
         prob_mut = 0.0,
         prune = False,
@@ -602,8 +608,11 @@ class PopGenetics:
         n_runts : int, optional
         If a liberal strategy is adopted, the number of least fit individuals to carry over to the next. Defaults to 1.
 
-        switch : int, optional 
+        switch_selection : int, optional 
         Optional switching generation for the selection type from fitness-proportionate to rank-based. Defaults to None (in which case no switching is applied).
+
+        sp_rank_selection : float, optional
+        If rank selection is applied, the selection pressure parameter of [...], 1 <= sp <= 2, where 1 is no selection pressure (flat PDF) and 2 is the steepest linear selection pressure. Defaults to 2.
 
         crossover_type : str, optional 
         Type of (numerical) crossover to perform. Currently only 'uniform' is supported. Defaults to 'uniform'. 
@@ -671,11 +680,11 @@ class PopGenetics:
             progress_bar = tqdm(total = N_gen, desc=f"[genepy] Evolution in progress", unit = "generations", file=sys.stdout,)
 
         for gen in range(N_gen):
-            if switch is not None and gen >= switch:
+            if switch_selection is not None and gen >= switch_selection:
                 rank_selection = True
-            elif switch is not None and gen < switch:
+            elif switch_selection is not None and gen < switch_selection:
                 rank_selection = False
-            elif switch is None:
+            elif switch_selection is None:
                 rank_selection = False
             mating_pool = self.create_mating_pool(
                 pop = pop,
@@ -683,6 +692,7 @@ class PopGenetics:
                 N_pairs = N_pairs,
                 selection_type = selection_type,
                 rank_selection = rank_selection,
+                sp_rank = sp_rank_selection,
             )
             offspring, fitness_arr = self.breed(
                 mating_pool = mating_pool,
