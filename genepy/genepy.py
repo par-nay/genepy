@@ -625,6 +625,9 @@ class PopGenetics:
         - 'median_fitness_per_generation' : np.ndarray
         A record of the median fitness value per generation (of the pruned population if applied), of shape (N_gen,)
 
+        - 'stdev_fitness_per_generation' : np.ndarray
+        A record of the scatter of fitness values in terms of their standard deviation per generation (of the pruned population if applied), of shape (N_gen,)
+
         """
         pop_dec = pop_bin2dec(
             pop_bin = pop,
@@ -636,6 +639,7 @@ class PopGenetics:
         best_fitness_per_gen   = [np.max(fitness_arr)]
         mean_fitness_per_gen   = [np.mean(fitness_arr)]
         median_fitness_per_gen = [np.median(fitness_arr)]
+        stdev_fitness_per_gen  = [np.std(fitness_arr)]
 
         if verbose:
             progress_bar = tqdm(total = N_gen, desc=f"[genepy] Evolution in progress", unit = "generations", file=sys.stdout,)
@@ -665,6 +669,7 @@ class PopGenetics:
             best_fitness_per_gen.append(np.max(fitness_arr))
             mean_fitness_per_gen.append(np.mean(fitness_arr))
             median_fitness_per_gen.append(np.median(fitness_arr))
+            stdev_fitness_per_gen.append(np.std(fitness_arr))
             pop = offspring
             if verbose:
                 progress_bar.update(1)
@@ -678,4 +683,5 @@ class PopGenetics:
             'best_fitness_per_generation': np.array(best_fitness_per_gen),
             'mean_fitness_per_generation': np.array(mean_fitness_per_gen),
             'median_fitness_per_generation': np.array(median_fitness_per_gen),
+            'stdev_fitness_per_generation': np.array(stdev_fitness_per_gen),
         }
