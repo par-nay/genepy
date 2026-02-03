@@ -563,6 +563,7 @@ class PopGenetics:
         N_pairs,
         selection_type = 'SUS',
         elitist = True,
+        liberal = False,
         switch = None,
         crossover_type = 'uniform',
         prob_mut = 0.0,
@@ -589,6 +590,9 @@ class PopGenetics:
 
         elitist : bool, optional
         If True, the fittest individual at each generation is carried over directly to the next. Defaults to True.
+
+        liberal : bool, optional
+        If True, the least fit individual at each generation is carried over to the next (as an attempt to preserve genetic diversity). Recommended to always use in combination with `elitist`. Defaults to False.
 
         switch : int, optional 
         Optional switching generation for the selection type from fitness-proportionate to rank-based. Defaults to None (in which case no switching is applied).
@@ -646,10 +650,14 @@ class PopGenetics:
         median_fitness_per_gen = [np.median(fitness_arr)]
         stdev_fitness_per_gen  = [np.std(fitness_arr)]
 
+        indsort = np.argsort(fitness_arr)
         if elitist:
-            indsort = np.argsort(fitness_arr)
             elite = pop[indsort][-1]
             fitness_elite = fitness_arr[indsort][-1]
+
+        if liberal:
+            runt = pop[indsort][0]
+            fitness_runt = fitness_arr[indsort][0]
 
         if verbose:
             progress_bar = tqdm(total = N_gen, desc=f"[genepy] Evolution in progress", unit = "generations", file=sys.stdout,)
@@ -679,6 +687,9 @@ class PopGenetics:
             if elitist: 
                 offspring   = np.concatenate([offspring,[elite]])
                 fitness_arr = np.concatenate([fitness_arr, [fitness_elite]])
+            if liberal: 
+                offspring   = np.concatenate([offspring,[runt]])
+                fitness_arr = np.concatenate([fitness_arr, [fitness_runt]])
             
             best_fitness_per_gen.append(np.max(fitness_arr))
             mean_fitness_per_gen.append(np.mean(fitness_arr))
@@ -686,10 +697,14 @@ class PopGenetics:
             stdev_fitness_per_gen.append(np.std(fitness_arr))
             
             # Update elite to be the best individual found so far
+            indsort = np.argsort(fitness_arr)
             if elitist:
-                indsort = np.argsort(fitness_arr)
                 elite = offspring[indsort][-1]
                 fitness_elite = fitness_arr[indsort][-1]
+
+            if liberal:
+                runt = offspring[indsort][0]
+                fitness_runt = fitness_arr[indsort][0]
             
             pop = offspring
             if verbose:
