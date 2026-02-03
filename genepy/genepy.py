@@ -649,6 +649,7 @@ class PopGenetics:
         if elitist:
             indsort = np.argsort(fitness_arr)
             elite = pop[indsort][-1]
+            fitness_elite = fitness_arr[indsort][-1]
 
         if verbose:
             progress_bar = tqdm(total = N_gen, desc=f"[genepy] Evolution in progress", unit = "generations", file=sys.stdout,)
@@ -675,14 +676,16 @@ class PopGenetics:
                 pruning_cutoff = pruning_cutoff,
                 return_fitness = True,
             )
+            if elitist: 
+                offspring   = np.concatenate([offspring,[elite]])
+                fitness_arr = np.concatenate([fitness_arr, [fitness_elite]])
+            
             best_fitness_per_gen.append(np.max(fitness_arr))
             mean_fitness_per_gen.append(np.mean(fitness_arr))
             median_fitness_per_gen.append(np.median(fitness_arr))
             stdev_fitness_per_gen.append(np.std(fitness_arr))
-            if elitist:
-                pop = np.concatenate([offspring,[elite]])
-            else:
-                pop = offspring
+            
+            pop = offspring
             if verbose:
                 progress_bar.update(1)
 
