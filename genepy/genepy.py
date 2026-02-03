@@ -562,6 +562,7 @@ class PopGenetics:
         N_gen, 
         N_pairs,
         selection_type = 'SUS',
+        elitist = True,
         switch = None,
         crossover_type = 'uniform',
         prob_mut = 0.0,
@@ -585,6 +586,9 @@ class PopGenetics:
 
         selection_type : str, optional
         Type of parent selection method to use. Options are: 'RW' for Roulette Wheel selection and 'SUS' for Stochastic Universal Sampling. The latter is a variation of the former with N_dim (angularly) equidistant pointers on the roulette wheel, where N_dim is the dimensionality of a seletion (e.g., for a "pair", N_dim = 2). Defaults to 'SUS'. 
+
+        elitist : bool, optional
+        If True, the fittest individual at each generation is carried over directly to the next. Defaults to True.
 
         switch : int, optional 
         Optional switching generation for the selection type from fitness-proportionate to rank-based. Defaults to None (in which case no switching is applied).
@@ -636,10 +640,15 @@ class PopGenetics:
             offset = self.offset,
         )
         fitness_arr = self.fitness_func(pop_dec)
+
         best_fitness_per_gen   = [np.max(fitness_arr)]
         mean_fitness_per_gen   = [np.mean(fitness_arr)]
         median_fitness_per_gen = [np.median(fitness_arr)]
         stdev_fitness_per_gen  = [np.std(fitness_arr)]
+
+        if elitist:
+            indsort = np.argsort(fitness_arr)
+            elite = pop[indsort][-1]
 
         if verbose:
             progress_bar = tqdm(total = N_gen, desc=f"[genepy] Evolution in progress", unit = "generations", file=sys.stdout,)
@@ -670,7 +679,10 @@ class PopGenetics:
             mean_fitness_per_gen.append(np.mean(fitness_arr))
             median_fitness_per_gen.append(np.median(fitness_arr))
             stdev_fitness_per_gen.append(np.std(fitness_arr))
-            pop = offspring
+            if elitist:
+                pop = np.concatenate([offspring,[elite]])
+            else:
+                pop = offspring
             if verbose:
                 progress_bar.update(1)
 
