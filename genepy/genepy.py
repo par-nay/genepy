@@ -685,6 +685,12 @@ class PopGenetics:
             median_fitness_per_gen.append(np.median(fitness_arr))
             stdev_fitness_per_gen.append(np.std(fitness_arr))
             
+            # Update elite to be the best individual found so far
+            if elitist:
+                indsort = np.argsort(fitness_arr)
+                elite = offspring[indsort][-1]
+                fitness_elite = fitness_arr[indsort][-1]
+            
             pop = offspring
             if verbose:
                 progress_bar.update(1)
