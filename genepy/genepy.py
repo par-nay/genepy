@@ -3,6 +3,7 @@
 import sys
 import numpy as np
 from tqdm import tqdm
+from multiprocessing import Pool, cpu_count
 
 def bin_str2arr(bin_str):
     """
@@ -411,14 +412,6 @@ class PopGenetics:
         ValueError
         If an unrecognized selection type is requested. Currently recognized types are 'RW' and 'SUS'.
         """
-        if fitness_arr is None:
-            pop_dec = pop_bin2dec(
-                pop_bin = pop,
-                N_bits_segment = self.N_bits_segment,
-                decimal_acc = self.decimal_acc,
-                offset = self.offset
-            )
-            fitness_arr = self.fitness_func(pop_dec)
 
         # first sort the population according to fitness
         indsort 	 = np.argsort(fitness_arr)
@@ -485,6 +478,7 @@ class PopGenetics:
         prune = False,
         pruning_cutoff = None,
         return_fitness = False,
+        n_workers = None,
     ):
         """
         Breed the mating pool (pairs) by performing crossover on the chromosomes to produce offspring and then mutating them. An optional elitist pruning of the offspring based on their fitness values can be applied.
@@ -534,13 +528,19 @@ class PopGenetics:
             random_rng = self.rng_mutation,
         )
         if return_fitness:
+            if n_workers is None:
+                n_workers = cpu_count()
             offspring_dec = pop_bin2dec(
                 pop_bin = offspring,
                 N_bits_segment = self.N_bits_segment,
                 decimal_acc = self.decimal_acc,
                 offset = self.offset,
             )
-            fitness_offspring = self.fitness_func(offspring_dec)
+            if n_workers > 1:
+                with Pool(processes = n_workers) as pool:
+                    fitness_offspring = np.array(pool.map(self.fitness_func, offspring_dec))
+            else:
+                fitness_offspring = self.fitness_func(offspring_dec)
         if prune:
             if pruning_cutoff is None:
                 raise ValueError("If pruning, a pruning cutoff (in number of offspring to keep) must be supplied.")
@@ -551,7 +551,11 @@ class PopGenetics:
                     decimal_acc = self.decimal_acc,
                     offset = self.offset,
                 )
-                fitness_offspring = self.fitness_func(offspring_dec)
+                if n_workers > 1:
+                    with Pool(processes = n_workers) as pool:
+                        fitness_offspring = np.array(pool.map(self.fitness_func, offspring_dec))
+                else:
+                    fitness_offspring = self.fitness_func(offspring_dec)
             indsort   = np.argsort(fitness_offspring)
             offspring = offspring[indsort][-pruning_cutoff:]
             fitness_offspring = fitness_offspring[indsort][-pruning_cutoff:]
@@ -578,6 +582,7 @@ class PopGenetics:
         prune = False,
         pruning_cutoff = None,
         verbose = True,
+        n_workers = None,
     ):
         """
         Evolve a population of individuals by natural selection for a fixed number of generations.
@@ -660,7 +665,11 @@ class PopGenetics:
             decimal_acc = self.decimal_acc,
             offset = self.offset,
         )
-        fitness_arr = self.fitness_func(pop_dec)
+        if n_workers > 1:
+            with Pool(processes = n_workers) as pool:
+                fitness_arr = np.array(pool.map(self.fitness_func, pop_dec))
+        else:
+            fitness_arr = self.fitness_func(pop_dec)
 
         best_fitness_per_gen   = [np.max(fitness_arr)]
         mean_fitness_per_gen   = [np.mean(fitness_arr)]
@@ -701,6 +710,7 @@ class PopGenetics:
                 prune = prune,
                 pruning_cutoff = pruning_cutoff,
                 return_fitness = True,
+                n_workers = n_workers,
             )
             if elitist: 
                 offspring   = np.concatenate([offspring, elites])
