@@ -565,6 +565,7 @@ class PopGenetics:
         elitist = True,
         n_elites = 1,
         liberal = False,
+        n_runts = 1,
         switch = None,
         crossover_type = 'uniform',
         prob_mut = 0.0,
@@ -596,7 +597,10 @@ class PopGenetics:
         If an elitist strategy is adopted, the number of fittest individuals to carry over to the next. Defaults to 1.
 
         liberal : bool, optional
-        If True, the least fit individual at each generation is carried over to the next (as an attempt to preserve genetic diversity). Recommended to always use in combination with `elitist`. Defaults to False.
+        If True, the least fit individual(s) at each generation is (are) carried over to the next (as an attempt to preserve genetic diversity). Recommended to always use in combination with `elitist`. Defaults to False.
+
+        n_runts : int, optional
+        If a liberal strategy is adopted, the number of least fit individuals to carry over to the next. Defaults to 1.
 
         switch : int, optional 
         Optional switching generation for the selection type from fitness-proportionate to rank-based. Defaults to None (in which case no switching is applied).
@@ -657,11 +661,11 @@ class PopGenetics:
         indsort = np.argsort(fitness_arr)
         if elitist:
             elites = pop[indsort][-n_elites:]
-            fitness_elites = fitness_arr[indsort][-n_elites]
+            fitness_elites = fitness_arr[indsort][-n_elites:]
 
         if liberal:
-            runt = pop[indsort][0]
-            fitness_runt = fitness_arr[indsort][0]
+            runts = pop[indsort][:n_runts]
+            fitness_runts = fitness_arr[indsort][:n_runts]
 
         if verbose:
             progress_bar = tqdm(total = N_gen, desc=f"[genepy] Evolution in progress", unit = "generations", file=sys.stdout,)
@@ -692,8 +696,8 @@ class PopGenetics:
                 offspring   = np.concatenate([offspring, elites])
                 fitness_arr = np.concatenate([fitness_arr, fitness_elites])
             if liberal: 
-                offspring   = np.concatenate([offspring,[runt]])
-                fitness_arr = np.concatenate([fitness_arr, [fitness_runt]])
+                offspring   = np.concatenate([offspring, runts])
+                fitness_arr = np.concatenate([fitness_arr, fitness_runts])
             
             best_fitness_per_gen.append(np.max(fitness_arr))
             mean_fitness_per_gen.append(np.mean(fitness_arr))
@@ -706,8 +710,8 @@ class PopGenetics:
                 fitness_elites = fitness_arr[indsort][-n_elites:]
 
             if liberal:
-                runt = offspring[indsort][0]
-                fitness_runt = fitness_arr[indsort][0]
+                runts = offspring[indsort][:n_runts]
+                fitness_runts = fitness_arr[indsort][:n_runts]
             
             pop = offspring
             if verbose:
