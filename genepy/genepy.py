@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import sys
+import warnings
 import numpy as np
 from tqdm import tqdm
 from multiprocessing import Pool, cpu_count
@@ -41,7 +42,7 @@ def bin_arr2str(bin_arr):
     return bin_str
 
 
-def dec2bin(dec_arr, N_bits_chromosome, decimal_acc, offset = 0):
+def dec2bin(dec_arr, n_bits_chromosome, decimal_acc, offset = 0):
     """
     Convert a vector of decimal numbers to a concatenated binary string (chromosome representation).
     
@@ -50,7 +51,7 @@ def dec2bin(dec_arr, N_bits_chromosome, decimal_acc, offset = 0):
     dec_arr : np.ndarray
     Input decimal vector
         
-    N_bits_chromosome : int
+    n_bits_chromosome : int
     Desired size of the full chromosomes in bits
         
     decimal_acc : int
@@ -64,8 +65,8 @@ def dec2bin(dec_arr, N_bits_chromosome, decimal_acc, offset = 0):
     str
     The chromosome representation of the input decimal vector
     """
-    N_var   = dec_arr.shape[-1]
-    divsize = N_bits_chromosome // N_var
+    n_var   = dec_arr.shape[-1]
+    divsize = n_bits_chromosome // n_var
     dec_arr = dec_arr + offset
     # Vectorized: scale and round all at once
     int_arr = np.round(dec_arr * (10**decimal_acc)).astype(int)
@@ -75,7 +76,7 @@ def dec2bin(dec_arr, N_bits_chromosome, decimal_acc, offset = 0):
     return bin_str
 
 
-def bin2dec(bin_arr, N_bits_segment, decimal_acc, offset = 0):
+def bin2dec(bin_arr, n_bits_segment, decimal_acc, offset = 0):
     """
     Convert a chromosome vector of bits (0s and 1s) to a decimal vector (phenotype representation).
     
@@ -84,7 +85,7 @@ def bin2dec(bin_arr, N_bits_segment, decimal_acc, offset = 0):
     bin_arr : np.ndarray
     Input chromosome vector (could have been created using `bin_str2arr`)
         
-    N_bits_segment : int
+    n_bits_segment : int
     Size of each independent variable of the vector in bits (also called a segment of the chromosome)
         
     decimal_acc : int
@@ -98,27 +99,27 @@ def bin2dec(bin_arr, N_bits_segment, decimal_acc, offset = 0):
     np.ndarray
     The phenotype representation (decimal vector) of the input chromosome (binary vector)
     """
-    N 		= len(bin_arr)
-    N_var 	= N // N_bits_segment
-    dec_arr = np.zeros(N_var)
+    n 		= len(bin_arr)
+    n_var 	= n // n_bits_segment
+    dec_arr = np.zeros(n_var)
     # Vectorized: reshape into segments and convert each
-    for i in range(N_var):
-        segment_str = bin_arr2str(bin_arr[i*N_bits_segment:(i+1)*N_bits_segment])
+    for i in range(n_var):
+        segment_str = bin_arr2str(bin_arr[i*n_bits_segment:(i+1)*n_bits_segment])
         dec_arr[i] = int(segment_str, 2) / (10**decimal_acc)
     dec_arr = dec_arr - offset
     return dec_arr
 
 
-def pop_dec2bin(pop_dec, N_bits_chromosome, decimal_acc, offset = 0):
+def pop_dec2bin(pop_dec, n_bits_chromosome, decimal_acc, offset = 0):
     """
     Convert a population of decimal vectors to their genotype representation (binary vectors).
 
     Parameters:
     -----------
     pop_dec : np.ndarray
-    A population in phenotype representation (array of shape `(popsize, N_var)` containing decimal vectors of individuals)
+    A population in phenotype representation (array of shape `(popsize, n_var)` containing decimal vectors of individuals)
 
-    N_bits_chromosome : int
+    n_bits_chromosome : int
     Desired size of a full chromosome in bits
 
     decimal_acc : int
@@ -133,9 +134,9 @@ def pop_dec2bin(pop_dec, N_bits_chromosome, decimal_acc, offset = 0):
     The genotype representation (binary vectors) of the input decimal population
     """
     popsize = pop_dec.shape[0]
-    N_var = pop_dec.shape[1]
-    divsize = N_bits_chromosome // N_var
-    pop_bin = np.zeros((popsize, N_bits_chromosome), dtype=int)
+    n_var = pop_dec.shape[1]
+    divsize = n_bits_chromosome // n_var
+    pop_bin = np.zeros((popsize, n_bits_chromosome), dtype=int)
     
     # Vectorized: convert all at once instead of looping through individuals
     pop_dec_offset = pop_dec + offset
@@ -143,23 +144,23 @@ def pop_dec2bin(pop_dec, N_bits_chromosome, decimal_acc, offset = 0):
     
     # Fill binary array efficiently
     for i in range(popsize):
-        for j in range(N_var):
+        for j in range(n_var):
             bin_str = format(int_pop[i, j], f'0{divsize}b')
             pop_bin[i, j*divsize:(j+1)*divsize] = np.array([int(b) for b in bin_str])
     
     return pop_bin
 
 
-def pop_bin2dec(pop_bin, N_bits_segment, decimal_acc, offset = 0):
+def pop_bin2dec(pop_bin, n_bits_segment, decimal_acc, offset = 0):
     """
     Convert a population of binary vectors to their phenotype representation (decimal vectors).
 
     Parameters:
     -----------
     pop_bin : np.ndarray
-    A population in genotype representation (array of shape `(popsize, N_bits_chromosome)` containing binary vectors of individuals)
+    A population in genotype representation (array of shape `(popsize, n_bits_chromosome)` containing binary vectors of individuals)
 
-    N_bits_segment : int
+    n_bits_segment : int
     Size of each independent variable (of an individual vector in the population) in bits (also called a segment of a chromosome)
 
     decimal_acc : int
@@ -174,13 +175,13 @@ def pop_bin2dec(pop_bin, N_bits_segment, decimal_acc, offset = 0):
     The phenotype representation (decimal vector) of the input binary population
     """
     popsize = pop_bin.shape[0]
-    N_var = pop_bin.shape[1] // N_bits_segment
-    pop_dec = np.zeros((popsize, N_var))
+    n_var = pop_bin.shape[1] // n_bits_segment
+    pop_dec = np.zeros((popsize, n_var))
     
     # Vectorized: convert all at once
     for i in range(popsize):
-        for j in range(N_var):
-            segment_str = bin_arr2str(pop_bin[i, j*N_bits_segment:(j+1)*N_bits_segment])
+        for j in range(n_var):
+            segment_str = bin_arr2str(pop_bin[i, j*n_bits_segment:(j+1)*n_bits_segment])
             pop_dec[i, j] = int(segment_str, 2) / (10**decimal_acc)
     
     pop_dec = pop_dec - offset
@@ -199,7 +200,7 @@ def crossover(
     Parameters:
     -----------
     mating_pool : np.ndarray
-    A mating pool (pairs of individuals) of shape `(N_pairs, 2, N_bits_chromosome)`.
+    A mating pool (pairs of individuals) of shape `(n_pairs, 2, n_bits_chromosome)`.
 
     type : str, optional
     Type of (numerical) crossover to perform. Currently only 'uniform' is implemented. Defaults to 'uniform'.
@@ -242,7 +243,7 @@ def mutate(
     Parameters:
     -----------
     pop : np.ndarray
-    A population in genotype representation (array of shape `(popsize, N_bits_chromosome)` containing binary vectors of individuals)
+    A population in genotype representation (array of shape `(popsize, n_bits_chromosome)` containing binary vectors of individuals)
 
     prob_mut : float
     Probability of mutation for each bit (between 0 and 1)
@@ -275,9 +276,9 @@ class PopGenetics:
     def __init__(
         self, 
         fitness_func, 
-        N_var, 
+        n_var, 
         decimal_acc, 
-        N_bits_chromosome,
+        n_bits_chromosome,
         seed_popinit   = 42,
         seed_selection = 43,
         seed_crossover = 44,
@@ -291,27 +292,28 @@ class PopGenetics:
         fitness_func : callable
         Function to evaluate the fitness of an individual or the entire population. Takes phenotype(s) as input.
 
-        N_var : int
+        n_var : int
         Number of varibles in an individual vector -- the dimensionality of the problem to be solved
 
         decimal_acc : int
         Desired decimal accuracy (in decimal places)
 
-        N_bits_chromosome : int
+        n_bits_chromosome : int
         Desired size of a full chromosome in bits
 
         seed_[popinit, selection, crossover, mutation] : int, optional
         Pseudorandom seed to initialize random number generators for creating the initial population, selecting pairs in mating pools, crossover, and mutation, respectively. Defaults to [42, 43, 44, 45].
         """
         self.fitness_func  = fitness_func
-        self.N_var         = N_var
+        self.n_var         = n_var
         self.decimal_acc   = decimal_acc
-        self.N_bits_chromosome  = N_bits_chromosome
-        self.N_bits_segment     = N_bits_chromosome // N_var
+        self.n_bits_chromosome  = n_bits_chromosome
+        self.n_bits_segment     = n_bits_chromosome // n_var
         self.rng_popinit   = np.random.default_rng(seed_popinit)
         self.rng_selection = np.random.default_rng(seed_selection)
         self.rng_crossover = np.random.default_rng(seed_crossover)
         self.rng_mutation  = np.random.default_rng(seed_mutation)
+        self._gen = 0
         
     def initialize_population(
         self, 
@@ -330,7 +332,7 @@ class PopGenetics:
         Desired number of individuals in the initial population (population size)
 
         var_ranges : np.ndarray
-        Lower and upper boundaries (inclusive) of variables to sample the initial population within, array of shape `(2, N_var)`.
+        Lower and upper boundaries (inclusive) of variables to sample the initial population within, array of shape `(2, n_var)`.
 
         dist : str, optional
         Prior probability distribution for sampling the initial population. Currently only 'uniform' is supported. Defaults to 'uniform'.
@@ -344,7 +346,7 @@ class PopGenetics:
         Returns:
         -----------
         np.ndarray
-        Initial population of shape `(popsize, N_var)` or `(popsize, N_bits_chromosome)` (if `return_genotype` is `True`)
+        Initial population of shape `(popsize, n_var)` or `(popsize, n_bits_chromosome)` (if `return_genotype` is `True`)
         """
         self.offset = offset
         pop = []
@@ -352,7 +354,7 @@ class PopGenetics:
             pop = self.rng_popinit.uniform(
                 low  = var_ranges[0],
                 high = var_ranges[1],
-                size = (popsize, self.N_var)
+                size = (popsize, self.n_var)
             )
         else:
             raise ValueError("Distribution type not recognized. Currently only 'uniform' works.")
@@ -361,7 +363,7 @@ class PopGenetics:
             for indiv in pop:
                 indiv_bin = dec2bin(
                     dec_arr = indiv,
-                    N_bits_chromosome = self.N_bits_chromosome,
+                    n_bits_chromosome = self.n_bits_chromosome,
                     decimal_acc = self.decimal_acc,
                     offset = offset,
                 )
@@ -378,7 +380,7 @@ class PopGenetics:
         self,
         pop, 
         fitness_arr,
-        N_pairs,
+        n_pairs,
         selection_type = 'SUS', 
         rank_selection = False,
         sp_rank = 2.0,
@@ -389,12 +391,12 @@ class PopGenetics:
         Parameters:
         -----------
         pop : np.ndarray
-        Binary population array of shape `(popsize, N_bits_chromosome)` where `N_bits_chromosome` is the size of each chromosome in bits. 
+        Binary population array of shape `(popsize, n_bits_chromosome)` where `n_bits_chromosome` is the size of each chromosome in bits. 
 
         fitness_arr : np.ndarray
         1D array of fitness values corresponding to the individuals in the (breeding) population.
 
-        N_pairs : int
+        n_pairs : int
         Number of pairs to be selected for mating. (Pairs are selected with replacement - one pair can produce multiple independent children.)
 
         selection_type : str, optional
@@ -409,7 +411,7 @@ class PopGenetics:
         Returns:
         --------
         np.ndarray
-        An array of shape `(N_pairs, 2, N_bits_chromosome)` - the mating pool.
+        An array of shape `(n_pairs, 2, n_bits_chromosome)` - the mating pool.
 
         Raises:
         -------
@@ -434,7 +436,7 @@ class PopGenetics:
         pairs = []
 
         if selection_type.lower() == 'rw': 	# this is the simple roulette wheel selection type (for selecting individuals)
-            for i in range(N_pairs):
+            for i in range(n_pairs):
                 r1 	= self.rng_selection.random()
                 r2 	= self.rng_selection.random()
                 j 	= 0 
@@ -452,7 +454,7 @@ class PopGenetics:
                 pairs.append(pop[pair])
         
         elif selection_type.lower() == 'sus': 	# this is the stochastic universal sampling
-            for i in range(N_pairs):
+            for i in range(n_pairs):
                 r1 	= self.rng_selection.random()*0.5
                 r2 	= r1 + 0.5
                 j 	= 0 
@@ -490,7 +492,7 @@ class PopGenetics:
         Parameters:
         -----------
         mating_pool: np.ndarray
-        The mating pool created using `create_mating_pool`, of shape `(N_pairs, 2, N_bits_chromosome)`.
+        The mating pool created using `create_mating_pool`, of shape `(n_pairs, 2, n_bits_chromosome)`.
 
         crossover_type : str, optional
         Type of (numerical) crossover to perform. Currently only 'uniform' is supported. Defaults to 'uniform'.
@@ -536,7 +538,7 @@ class PopGenetics:
                 n_workers = cpu_count()
             offspring_dec = pop_bin2dec(
                 pop_bin = offspring,
-                N_bits_segment = self.N_bits_segment,
+                n_bits_segment = self.n_bits_segment,
                 decimal_acc = self.decimal_acc,
                 offset = self.offset,
             )
@@ -551,7 +553,7 @@ class PopGenetics:
             if not return_fitness:
                 offspring_dec = pop_bin2dec(
                     pop_bin = offspring,
-                    N_bits_segment = self.N_bits_segment,
+                    n_bits_segment = self.n_bits_segment,
                     decimal_acc = self.decimal_acc,
                     offset = self.offset,
                 )
@@ -572,8 +574,8 @@ class PopGenetics:
     def evolve(
         self, 
         pop, 
-        N_gen, 
-        N_pairs,
+        n_gen, 
+        n_pairs,
         selection_type = 'SUS',
         elitist = True,
         n_elites = 1,
@@ -591,15 +593,17 @@ class PopGenetics:
         """
         Evolve a population of individuals by natural selection for a fixed number of generations.
 
+        Note: This method supports checkpointing. You can call it multiple times with increasing `n_gen` to continue evolution from where it left off, maintaining reproducibility and progress tracking. Upon subsequent calls, it is possible to supply new parameter values, except `pop` (any `pop` supplied would be completely ignored). `switch_selection` remains universal.
+
         Parameters:
         -----------
         pop : np.ndarray 
-        Binary population array of shape `(popsize, N_bits_chromosome)` where `N_bits_chromosome` is the size of each chromosome in bits. 
+        Binary population array of shape `(popsize, n_bits_chromosome)` where `n_bits_chromosome` is the size of each chromosome in bits. 
 
-        N_gen : int
+        n_gen : int
         Number of generation to evolve the population for 
 
-        N_pairs: int 
+        n_pairs: int 
         Number of mating pairs to pick in each mating pool 
 
         selection_type : str, optional
@@ -651,104 +655,113 @@ class PopGenetics:
         The fitness value of the fittest solution found by evolution 
 
         - 'best_fitness_per_generation' : np.ndarray
-        A record of the best fitness value per generation (or in other words a learning curve), of shape (N_gen,)
+        A record of the best fitness value per generation (or in other words a learning curve), of shape (n_gen+1,)
 
         - 'mean_fitness_per_generation' : np.ndarray 
-        A record of the mean fitness value per generation (of the pruned population if applied), of shape (N_gen,)
+        A record of the mean fitness value per generation (of the pruned population if applied), of shape (n_gen+1,)
 
         - 'median_fitness_per_generation' : np.ndarray
-        A record of the median fitness value per generation (of the pruned population if applied), of shape (N_gen,)
+        A record of the median fitness value per generation (of the pruned population if applied), of shape (n_gen+1,)
 
         - 'stdev_fitness_per_generation' : np.ndarray
-        A record of the scatter of fitness values in terms of their standard deviation per generation (of the pruned population if applied), of shape (N_gen,)
+        A record of the scatter of fitness values in terms of their standard deviation per generation (of the pruned population if applied), of shape (n_gen+1,)
 
         """
-        pop_dec = pop_bin2dec(
-            pop_bin = pop,
-            N_bits_segment = self.N_bits_segment,
+
+        if self._gen == 0:
+            self.pop = pop
+                
+        self.pop_dec = pop_bin2dec(
+            pop_bin = self.pop,
+            n_bits_segment = self.n_bits_segment,
             decimal_acc = self.decimal_acc,
             offset = self.offset,
         )
         if n_workers > 1:
             with Pool(processes = n_workers) as pool:
-                fitness_arr = np.array(pool.map(self.fitness_func, pop_dec))
+                self.fitness_arr = np.array(pool.map(self.fitness_func, self.pop_dec))
         else:
-            fitness_arr = self.fitness_func(pop_dec)
+            self.fitness_arr = self.fitness_func(self.pop_dec)
 
-        best_fitness_per_gen   = [np.max(fitness_arr)]
-        mean_fitness_per_gen   = [np.mean(fitness_arr)]
-        median_fitness_per_gen = [np.median(fitness_arr)]
-        stdev_fitness_per_gen  = [np.std(fitness_arr)]
-
-        indsort = np.argsort(fitness_arr)
-        if elitist:
-            elites = pop[indsort][-n_elites:]
-            fitness_elites = fitness_arr[indsort][-n_elites:]
-
-        if liberal:
-            runts = pop[indsort][:n_runts]
-            fitness_runts = fitness_arr[indsort][:n_runts]
+        if self._gen == 0:
+            self.best_fitness_per_gen   = [np.max(self.fitness_arr)]
+            self.mean_fitness_per_gen   = [np.mean(self.fitness_arr)]
+            self.median_fitness_per_gen = [np.median(self.fitness_arr)]
+            self.stdev_fitness_per_gen  = [np.std(self.fitness_arr)]
 
         if verbose:
-            progress_bar = tqdm(total = N_gen, desc=f"[genepy] Evolution in progress", unit = "generations", file=sys.stdout,)
+            progress_bar = tqdm(total = n_gen, initial = self._gen, desc=f"[genepy] Evolution in progress", unit = "gen", file=sys.stdout,)
 
-        for gen in range(N_gen):
-            if switch_selection is not None and gen >= switch_selection:
-                rank_selection = True
-            elif switch_selection is not None and gen < switch_selection:
-                rank_selection = False
-            elif switch_selection is None:
-                rank_selection = False
-            mating_pool = self.create_mating_pool(
-                pop = pop,
-                fitness_arr = fitness_arr,
-                N_pairs = N_pairs,
-                selection_type = selection_type,
-                rank_selection = rank_selection,
-                sp_rank = sp_rank_selection,
-            )
-            offspring, fitness_arr = self.breed(
-                mating_pool = mating_pool,
-                crossover_type = crossover_type,
-                prob_mut = prob_mut,
-                prune = prune,
-                pruning_cutoff = pruning_cutoff,
-                return_fitness = True,
-                n_workers = n_workers,
-            )
-            if elitist: 
-                offspring   = np.concatenate([offspring, elites])
-                fitness_arr = np.concatenate([fitness_arr, fitness_elites])
-            if liberal: 
-                offspring   = np.concatenate([offspring, runts])
-                fitness_arr = np.concatenate([fitness_arr, fitness_runts])
-            
-            best_fitness_per_gen.append(np.max(fitness_arr))
-            mean_fitness_per_gen.append(np.mean(fitness_arr))
-            median_fitness_per_gen.append(np.median(fitness_arr))
-            stdev_fitness_per_gen.append(np.std(fitness_arr))
-            
-            indsort = np.argsort(fitness_arr)
-            if elitist:
-                elites = offspring[indsort][-n_elites:]
-                fitness_elites = fitness_arr[indsort][-n_elites:]
+        indsort = np.argsort(self.fitness_arr)
+        if elitist:
+            self.elites = self.pop[indsort][-n_elites:]
+            self.fitness_elites = self.fitness_arr[indsort][-n_elites:]
 
-            if liberal:
-                runts = offspring[indsort][:n_runts]
-                fitness_runts = fitness_arr[indsort][:n_runts]
-            
-            pop = offspring
-            if verbose:
-                progress_bar.update(1)
+        if liberal:
+            self.runts = self.pop[indsort][:n_runts]
+            self.fitness_runts = self.fitness_arr[indsort][:n_runts]
 
-        indsort = np.argsort(fitness_arr)
-        fittest_indiv = offspring[indsort][-1]
-        fittest_indiv_dec = bin2dec(fittest_indiv, self.N_bits_segment, self.decimal_acc, offset = self.offset)
+        if self._gen < n_gen:
+            for gen in range(self._gen, n_gen):
+                if switch_selection is not None and gen >= switch_selection:
+                    rank_selection = True
+                elif switch_selection is not None and gen < switch_selection:
+                    rank_selection = False
+                elif switch_selection is None:
+                    rank_selection = False
+                mating_pool = self.create_mating_pool(
+                    pop = self.pop,
+                    fitness_arr = self.fitness_arr,
+                    n_pairs = n_pairs,
+                    selection_type = selection_type,
+                    rank_selection = rank_selection,
+                    sp_rank = sp_rank_selection,
+                )
+                offspring, self.fitness_arr = self.breed(
+                    mating_pool = mating_pool,
+                    crossover_type = crossover_type,
+                    prob_mut = prob_mut,
+                    prune = prune,
+                    pruning_cutoff = pruning_cutoff,
+                    return_fitness = True,
+                    n_workers = n_workers,
+                )
+                if elitist: 
+                    offspring   = np.concatenate([offspring, self.elites])
+                    self.fitness_arr = np.concatenate([self.fitness_arr, self.fitness_elites])
+                if liberal: 
+                    offspring   = np.concatenate([offspring, self.runts])
+                    self.fitness_arr = np.concatenate([self.fitness_arr, self.fitness_runts])
+                
+                self.best_fitness_per_gen.append(np.max(self.fitness_arr))
+                self.mean_fitness_per_gen.append(np.mean(self.fitness_arr))
+                self.median_fitness_per_gen.append(np.median(self.fitness_arr))
+                self.stdev_fitness_per_gen.append(np.std(self.fitness_arr))
+                
+                indsort = np.argsort(self.fitness_arr)
+                if elitist:
+                    self.elites = offspring[indsort][-n_elites:]
+                    self.fitness_elites = self.fitness_arr[indsort][-n_elites:]
+
+                if liberal:
+                    self.runts = offspring[indsort][:n_runts]
+                    self.fitness_runts = self.fitness_arr[indsort][:n_runts]
+                
+                self.pop = offspring
+                self._gen += 1
+                if verbose:
+                    progress_bar.update(1)
+        else:
+            warnings.warn(f"Your population has already been evolved for {self._gen} generations. If you want to evolve for longer, please enter `n_gen` > {self._gen}. Skipping this evolution call...")
+
+        indsort = np.argsort(self.fitness_arr)
+        fittest_indiv = self.pop[indsort][-1]
+        fittest_indiv_dec = bin2dec(fittest_indiv, self.n_bits_segment, self.decimal_acc, offset = self.offset)
         return {
             'fittest_individual': fittest_indiv_dec,
-            'best_overall_fitness': fitness_arr[indsort][-1],
-            'best_fitness_per_generation': np.array(best_fitness_per_gen),
-            'mean_fitness_per_generation': np.array(mean_fitness_per_gen),
-            'median_fitness_per_generation': np.array(median_fitness_per_gen),
-            'stdev_fitness_per_generation': np.array(stdev_fitness_per_gen),
+            'best_overall_fitness': self.fitness_arr[indsort][-1],
+            'best_fitness_per_generation': np.array(self.best_fitness_per_gen),
+            'mean_fitness_per_generation': np.array(self.mean_fitness_per_gen),
+            'median_fitness_per_generation': np.array(self.median_fitness_per_gen),
+            'stdev_fitness_per_generation': np.array(self.stdev_fitness_per_gen),
         }
