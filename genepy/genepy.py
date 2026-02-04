@@ -64,17 +64,14 @@ def dec2bin(dec_arr, N_bits_chromosome, decimal_acc, offset = 0):
     str
     The chromosome representation of the input decimal vector
     """
-    m 	    = []
     N_var   = dec_arr.shape[-1]
     divsize = N_bits_chromosome // N_var
     dec_arr = dec_arr + offset
-    for i in range(N_var):
-        num 	= int(round(dec_arr[i], decimal_acc)*(10**decimal_acc))
-        num_bin = format(num, 'b')
-        if len(num_bin) < divsize: # zero padding
-            num_bin = ('0'*(divsize - len(num_bin))) + num_bin
-        m.append(num_bin)
-    bin_str = "".join(m)
+    # Vectorized: scale and round all at once
+    int_arr = np.round(dec_arr * (10**decimal_acc)).astype(int)
+    # Convert each to binary with padding and concatenate
+    bin_strs = [format(num, f'0{divsize}b') for num in int_arr]
+    bin_str = "".join(bin_strs)
     return bin_str
 
 
@@ -103,13 +100,12 @@ def bin2dec(bin_arr, N_bits_segment, decimal_acc, offset = 0):
     """
     N 		= len(bin_arr)
     N_var 	= N // N_bits_segment
-    dec_arr = []
+    dec_arr = np.zeros(N_var)
+    # Vectorized: reshape into segments and convert each
     for i in range(N_var):
-        var = bin_arr2str(bin_arr[i*N_bits_segment : (i+1)*N_bits_segment])
-        var = int(var, 2)
-        var = var / 10**(decimal_acc)
-        dec_arr.append(var)
-    dec_arr = np.array(dec_arr) - offset
+        segment_str = bin_arr2str(bin_arr[i*N_bits_segment:(i+1)*N_bits_segment])
+        dec_arr[i] = int(segment_str, 2) / (10**decimal_acc)
+    dec_arr = dec_arr - offset
     return dec_arr
 
 
@@ -136,16 +132,22 @@ def pop_dec2bin(pop_dec, N_bits_chromosome, decimal_acc, offset = 0):
     str
     The genotype representation (binary vectors) of the input decimal population
     """
-    pop_bin = []
-    for indiv in pop_dec:
-        indiv_bin = dec2bin(
-            dec_arr = indiv,
-            N_bits_chromosome = N_bits_chromosome,
-            decimal_acc = decimal_acc,
-            offset = offset,
-        )
-        pop_bin.append(bin_str2arr(indiv_bin))
-    return np.array(pop_bin)
+    popsize = pop_dec.shape[0]
+    N_var = pop_dec.shape[1]
+    divsize = N_bits_chromosome // N_var
+    pop_bin = np.zeros((popsize, N_bits_chromosome), dtype=int)
+    
+    # Vectorized: convert all at once instead of looping through individuals
+    pop_dec_offset = pop_dec + offset
+    int_pop = np.round(pop_dec_offset * (10**decimal_acc)).astype(int)
+    
+    # Fill binary array efficiently
+    for i in range(popsize):
+        for j in range(N_var):
+            bin_str = format(int_pop[i, j], f'0{divsize}b')
+            pop_bin[i, j*divsize:(j+1)*divsize] = np.array([int(b) for b in bin_str])
+    
+    return pop_bin
 
 
 def pop_bin2dec(pop_bin, N_bits_segment, decimal_acc, offset = 0):
@@ -171,16 +173,18 @@ def pop_bin2dec(pop_bin, N_bits_segment, decimal_acc, offset = 0):
     np.ndarray
     The phenotype representation (decimal vector) of the input binary population
     """
-    pop_dec = []
-    for indiv in pop_bin:
-        indiv_dec = bin2dec(
-            bin_arr = indiv,
-            N_bits_segment = N_bits_segment,
-            decimal_acc = decimal_acc,
-            offset = offset,
-        )
-        pop_dec.append(indiv_dec)
-    return np.array(pop_dec)
+    popsize = pop_bin.shape[0]
+    N_var = pop_bin.shape[1] // N_bits_segment
+    pop_dec = np.zeros((popsize, N_var))
+    
+    # Vectorized: convert all at once
+    for i in range(popsize):
+        for j in range(N_var):
+            segment_str = bin_arr2str(pop_bin[i, j*N_bits_segment:(j+1)*N_bits_segment])
+            pop_dec[i, j] = int(segment_str, 2) / (10**decimal_acc)
+    
+    pop_dec = pop_dec - offset
+    return pop_dec
 
 
 def crossover(
