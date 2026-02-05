@@ -1,7 +1,7 @@
 # GenePy
 ### Genetic Algorithms with Python
 
-Yet another GA code for lightweight applications of GA in Python.
+Yet another package for lightweight applications of GA in Python.
 
 This package provides utilities for implementation of Genetic Algorithm (Holland [1962](https://dl.acm.org/doi/10.1145/321127.321128)) for multivariate, multimodal optimization problems. Check out an introduction from a biological perspective in my paper, Nayak & Saha ([2022](https://academic.oup.com/mnras/article/510/2/2173/6462919))
 
