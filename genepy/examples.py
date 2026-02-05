@@ -131,7 +131,7 @@ def schwefel(x):
     n_var = x.shape[-1]
     s = 0
     s = np.sum(
-        x*sin(sqrt(x)), 
+        x*sin(sqrt(np.abs(x))), 
         axis = -1
     )
     return 418.9828872724338*n_var - s
