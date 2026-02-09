@@ -10,20 +10,33 @@ def ackley(x):
     - global minimum at x_0 = (0,...,0), ackley(x_0) = 0
     """
     n_var = x.shape[-1]
-    a = -20*exp(-0.02 * sqrt(np.sum(x**2, axis = -1)/n_var))
+    a = -20*exp(-0.2 * sqrt(np.sum(x**2, axis = -1)/n_var))
     b = -exp(np.sum(cos(2*pi*x), axis = -1)/n_var)
     return a + b + 20 + e
 
 
-def alpine(x):
+def alpine1(x):
     """
-    Alpine function
+    Alpine function #1
     - arbitrary n_var
     - exploration range [-10,10] for each variable
     - global minimum at x_0 = (0,...,0), alpine(x_0) = 0
     """
     return np.sum(
         np.abs(x*sin(x) + 0.1*x),
+        axis = -1
+    )
+
+
+def alpine2(x):
+    """
+    Alpine function #2
+    - arbitrary n_var
+    - exploration range [0,10] for each variable
+    - global maximum at x_0 = 7.9170526982459462172*(1,...,1), alpine2(x_0) = 2.80813118000070053291 ** n_var
+    """
+    return np.sum(
+        sqrt(x)*sin(x),
         axis = -1
     )
 
@@ -97,7 +110,7 @@ def rastrigin(x):
     Rastrigin function
     - arbitrary n_var
     - exploration range [-5.12,5.12] for each variable
-    - global minimum at x_0 = (0,...,0), rosenbrock(x_0) = 0
+    - global minimum at x_0 = (0,...,0), rastrigin(x_0) = 0
     """
     n_var = x.shape[-1]
     r = np.sum(
@@ -129,7 +142,6 @@ def schwefel(x):
     - global minimum at x_0 = 420.9687*(1,...,1), schwefel(x_0) = 0
     """
     n_var = x.shape[-1]
-    s = 0
     s = np.sum(
         x*sin(sqrt(np.abs(x))), 
         axis = -1
