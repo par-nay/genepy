@@ -53,9 +53,9 @@ def colville(x):
     if x.shape[-1] != n_var:
         raise ValueError("Inputs must be 4D vectors or arrays thereof.")
     x1, x2, x3, x4 = x.T
-    a = 100*(x1 - x2**2)**2 + (1 - x1)**2
+    a = 100*(x2 - x1**2)**2 + (1 - x1)**2
     b = 90*(x4 - x3**2)**2 + (1 - x3)**2
-    c = 10.1*(x2 - 1)**2 + (x4 - 1)**2
+    c = 10.1*((x2 - 1)**2 + (x4 - 1)**2)
     d = 19.8*(x2 - 1)*(x4 - 1)
     return a + b + c + d
 
