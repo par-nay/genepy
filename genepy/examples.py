@@ -6,7 +6,7 @@ def ackley(x):
     """
     Ackley function
     - arbitrary n_var
-    - exploration range [-35,35] for each variable
+    - exploration range [-10,10] for each variable
     - global minimum at x_0 = (0,...,0), ackley(x_0) = 0
     """
     n_var = x.shape[-1]
@@ -111,7 +111,7 @@ def rosenbrock(x):
     """
     Rosenbrock function
     - arbitrary n_var
-    - exploration range [-30,30] for each variable
+    - exploration range [-2,2] for each variable
     - global minimum at x_0 = (1,...,1), rosenbrock(x_0) = 0
     """
     n_var = x.shape[-1]

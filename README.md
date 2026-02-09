@@ -15,33 +15,28 @@ pip install git+https://github.com/par-nay/genepy.git
 
 Imports
 ```Python
-from genepy import genepy
+from genepy import genepy, examples
 import numpy as np
 import matplotlib.pyplot as plt
 ```
 
 Define a fitness function from your cost function
 ```Python
-def cost(x): # to be minimized
-    n_var = x.shape[-1]
-    a = 0
-    for i in range(n_var):
-        a += np.abs(x[:,i]*np.sin(x[:,i]) + 0.1*x[:,i])
-    return a
+cost = examples.ackley # replace this with your objective
 
 def fitness(x): # to be maximized, by definition
-    return 1/(1+cost(x))
+    return 1/(1 + cost(x)) # this also depends loosely on your objective
 ```
 
-Set GA hyperparameters
+Set initial GA hyperparameters
 ```Python
-decimals   = 3
-n_var      = 3
+decimals   = 4
+n_var      = 2
 var_ranges = np.array([[-10,]*n_var,[10,]*n_var])
 n_bits_segment    = len(format(int(max(var_ranges[1] - var_ranges[0])*10**decimals), 'b'))
 n_bits_chromosome = n_bits_segment * n_var
 offset     = -var_ranges[0]
-init_popsize = 500
+init_popsize = 400
 ```
 
 Initialize GA
@@ -53,7 +48,7 @@ PopGen = genepy.PopGenetics(
     n_bits_chromosome = n_bits_chromosome,
 )
 pop_bin = PopGen.initialize_population(
-    popsize = 500, 
+    popsize = init_popsize, 
     var_ranges = var_ranges, 
     return_genotype = True,
     offset = offset,
@@ -64,14 +59,14 @@ Run evolution
 ```Python
 evol_rec = PopGen.evolve(
     pop_bin, 
-    n_gen    = 200, 
+    n_gen    = 50, 
     n_pairs  = 800,
     elitist  = True,
     n_elites = 3,
     liberal  = False,
     n_runts  = 0,
     switch_selection = 5,
-    prob_mut = 0.05, 
+    prob_mut = 0.02, 
     prune    = True,
     pruning_cutoff = 800,
     verbose  = True,
@@ -98,7 +93,7 @@ plt.show()
 
 
 ## Tutorial
-Coming soon!
+Check out the notebook at `tutorial/tutorial.ipynb` for a lightning tutorial of GenePy!
 
 ## Get in touch
 Drop me an email at [parth3e8@gmail.com](mailto:parth3e8@gmail.com) in case of any questions or to request more functionality!
